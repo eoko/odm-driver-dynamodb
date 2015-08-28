@@ -2,6 +2,43 @@
 
 class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
 {
+    
+    protected function getFieldsMetadata() {
+        
+        $field1 = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
+        $field1->shouldReceive('getValue')->andReturn('john');
+        $field1->shouldReceive('getType')->andReturn('string');
+        
+        $field2 = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
+        $field2->shouldReceive('getValue')->andReturn(true);
+        $field2->shouldReceive('getType')->andReturn('boolean');
+        
+        $key = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
+        $key->shouldReceive('getValue')->andReturn('dummy 1');
+        $key->shouldReceive('getType')->andReturn('string');
+        
+        $range = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
+        $range->shouldReceive('getValue')->andReturn('dummy 2');
+        $range->shouldReceive('getType')->andReturn('string');
+        
+        return [
+            'key' => [
+                'Eoko\ODM\Metadata\FieldInterface' => $key
+            ],
+            'range' => [
+                'Eoko\ODM\Metadata\FieldInterface' => $range
+            ],
+            'field1' => [
+                'Eoko\ODM\Metadata\FieldInterface' => $field1
+            ],
+            'field2' => [
+                'Eoko\ODM\Metadata\FieldInterface' => $field2
+            ]
+        ];
+
+
+
+    }
 
     protected function getClassMetadata()
     {
@@ -25,11 +62,10 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
             ]
         ];
 
-
-//        $classMetadata = new \Eoko\ODM\DocumentManager\Metadata\ClassMetadata();
         $classMetadata = Mockery::mock('Eoko\ODM\DocumentManager\Metadata\ClassMetadata');
         $classMetadata->shouldReceive('getIdentifier')->andReturn($identifiers);
         $classMetadata->shouldReceive('getDocument')->andReturn($document);
+        $classMetadata->shouldReceive('getFields')->andReturn($this->getFieldsMetadata());
 
         return $classMetadata;
     }
@@ -48,6 +84,7 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
         ]);
 
         $client->shouldReceive('getItem')->andReturn($result);
+        $client->shouldReceive('putItem')->andReturn([]);
         return $client;
     }
 
@@ -117,6 +154,20 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
                 'key' => 'dummy 1',
                 'range' => 'dummy 1']
         );
+
+    }
+
+    public function testAddItemValues()
+    {
+        $values = [
+            'field1' => 'john',
+            'field2' => true,
+            'key' => 'dummy 1',
+            'range' => 'dummy 1'
+        ];
+
+        $result = $this->getDriver()->addItem($values, $this->getClassMetadata());
+        $this->assertInternalType('array',$result);
 
     }
 
