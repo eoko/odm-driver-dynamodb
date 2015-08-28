@@ -33,11 +33,17 @@ class DynamoDBDriver implements DriverInterface
         'null' => 'NULL',
     ];
 
+    protected $options;
+
     /**
-     * @param DynamoDbClient $client
+     * @param $options
      */
-    public function __construct(DynamoDbClient $client)
+    public function __construct($options)
     {
+        $this->options = $options;
+    }
+
+    public function setClient(DynamoDbClient $client) {
         $this->client = $client;
     }
 
