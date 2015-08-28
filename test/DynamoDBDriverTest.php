@@ -87,6 +87,15 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
         $this->assertArraySubset(['S' => 'dummy 2'], $result['range']);
     }
 
+    /**
+     * @expectedException \Eoko\ODM\Driver\DynamoDB\MissingIdentifierException
+     */
+    public function testGetKeyValueException()
+    {
+        $this->invokeMethod('getKeyValues', array(['key' => 'dummy 1'], $this->getClassMetadata()));
+        $this->invokeMethod('getKeyValues', array(['range' => 'dummy 1'], $this->getClassMetadata()));
+    }
+
     public function testMapTypeField()
     {
         $this->assertEquals('S', $this->invokeMethod('mapTypeField', ['string']));
@@ -99,25 +108,6 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
         $values = [
             'key' => 'dummy 1',
             'range' => 'dummy 2'
-        ];
-
-        $result = $this->getDriver()->getItem($values, $this->getClassMetadata());
-        $this->assertEquals($result, [
-                'field1' => 'john',
-                'field2' => true,
-                'key' => 'dummy 1',
-                'range' => 'dummy 1']
-        );
-
-    }
-
-    /**
-     * @expectedException \Eoko\ODM\Driver\DynamoDB\MissingIdentifierException
-     */
-    public function testGetItemValuesException()
-    {
-        $values = [
-            'key' => 'dummy 1',
         ];
 
         $result = $this->getDriver()->getItem($values, $this->getClassMetadata());
