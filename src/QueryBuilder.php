@@ -7,7 +7,8 @@ use Doctrine\Common\Collections\Expr\CompositeExpression;
 use Doctrine\Common\Collections\Expr\ExpressionVisitor;
 use Doctrine\Common\Collections\Expr\Value;
 
-class QueryBuilder extends ExpressionVisitor {
+class QueryBuilder extends ExpressionVisitor
+{
     /**
      * Converts a comparison expression into the target query language output.
      *
@@ -46,8 +47,8 @@ class QueryBuilder extends ExpressionVisitor {
     {
         $result = [];
         $tokens = [];
-        foreach($expr->getExpressionList() as $exp) {
-            if($exp instanceof CompositeExpression) {
+        foreach ($expr->getExpressionList() as $exp) {
+            if ($exp instanceof CompositeExpression) {
                 $w = $this->walkCompositeExpression($exp);
             } else {
                 $w = $this->walkComparison($exp);
@@ -57,6 +58,4 @@ class QueryBuilder extends ExpressionVisitor {
         };
         return ['expression' => '( ' . implode(' ' . $expr->getType() . ' ', $result) .' )', 'tokens' => $tokens];
     }
-
-
 }

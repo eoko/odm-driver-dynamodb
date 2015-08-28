@@ -7,7 +7,6 @@ use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\ExpressionBuilder;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
 
@@ -43,7 +42,8 @@ class DynamoDBDriver implements DriverInterface
         $this->options = $options;
     }
 
-    public function setClient(DynamoDbClient $client) {
+    public function setClient(DynamoDbClient $client)
+    {
         $this->client = $client;
     }
 
@@ -82,7 +82,7 @@ class DynamoDBDriver implements DriverInterface
         $result = $this->commit('scan', ['TableName' => $classMetadata->getDocument()->getTable()]);
         $items = $result->get('Items');
 
-        return array_map(function($item) {
+        return array_map(function ($item) {
             return $this->cleanResult($item);
         }, $items);
     }
@@ -101,24 +101,24 @@ class DynamoDBDriver implements DriverInterface
         $expression = $criteria->getWhereExpression()->visit(new QueryBuilder(), $classMetadata);
         $tokens = isset($expression['tokens']) ? $expression['tokens'] : [];
 
-        $tokens = array_map(function($item) use ($classMetadata) {
+        $tokens = array_map(function ($item) use ($classMetadata) {
             $type = $this->mapTypeField($classMetadata->getTypeOfField($item['field']));
             return [$type => $item['value']];
         }, $tokens);
 
-        $request = array(
+        $request = [
             'TableName' => $classMetadata->getDocument()->getTable(),
             'FilterExpression' => $expression['expression'],
             'ExpressionAttributeValues' => $tokens,
-        );
+        ];
 
-        if($limit) {
+        if ($limit) {
             $request['limit'] = $limit;
         }
 
         $result = $this->commit('scan', $request);
 
-        return array_map(function($item) {
+        return array_map(function ($item) {
             return $this->cleanResult($item);
         }, $result->get('Items'));
     }
@@ -216,8 +216,8 @@ class DynamoDBDriver implements DriverInterface
     private function getKeyValues(array $values, ClassMetadata $classMetadata)
     {
         return array_map(function ($item) use ($values, $classMetadata) {
-            if(!isset($values[$item['name']])) {
-                throw new MissingIdentifierException( 'The field of type `' . $item['name'] . '` is mandatory');
+            if (!isset($values[$item['name']])) {
+                throw new MissingIdentifierException('The field of type `' . $item['name'] . '` is mandatory');
             }
             return [$this->mapTypeField($item['type']) => $values[$item['name']]];
         }, $classMetadata->getIdentifier());
@@ -230,10 +230,10 @@ class DynamoDBDriver implements DriverInterface
     private function getItemValues(array $values, ClassMetadata $classMetadata)
     {
         $mapped = array_map(function ($items) use ($values) {
-            if(is_array($items)) {
+            if (is_array($items)) {
                 foreach ($items as $item) {
                     if ($item instanceof AbstractField) {
-                        if (isset($values[$item->name]) && !empty($values[$item->name]) ) {
+                        if (isset($values[$item->name]) && !empty($values[$item->name])) {
                             return [$this->mapTypeField($item->type) => $values[$item->name]];
                         }
                     }

@@ -2,25 +2,25 @@
 
 class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
 {
-    
-    protected function getFieldsMetadata() {
-        
+
+    protected function getFieldsMetadata()
+    {
         $field1 = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
         $field1->shouldReceive('getValue')->andReturn('john');
         $field1->shouldReceive('getType')->andReturn('string');
-        
+
         $field2 = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
         $field2->shouldReceive('getValue')->andReturn(true);
         $field2->shouldReceive('getType')->andReturn('boolean');
-        
+
         $key = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
         $key->shouldReceive('getValue')->andReturn('dummy 1');
         $key->shouldReceive('getType')->andReturn('string');
-        
+
         $range = Mockery::mock('Eoko\ODM\Metadata\FieldInterface');
         $range->shouldReceive('getValue')->andReturn('dummy 2');
         $range->shouldReceive('getType')->andReturn('string');
-        
+
         return [
             'key' => [
                 'Eoko\ODM\Metadata\FieldInterface' => $key
@@ -35,9 +35,6 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
                 'Eoko\ODM\Metadata\FieldInterface' => $field2
             ]
         ];
-
-
-
     }
 
     protected function getClassMetadata()
@@ -46,10 +43,10 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
         $document->shouldReceive('getTable')->andReturn('dummy_table');
 
         $identifiers = Mockery::mock('Eoko\ODM\DocumentManager\Metadata\IdentifierInterface');
-        $identifiers->shouldReceive('getIdentifier')->andReturn(array(
+        $identifiers->shouldReceive('getIdentifier')->andReturn([
             'key' => 'HASH',
             'range' => 'RANGE',
-        ));
+        ]);
 
         $identifiers = [
             'key' => [
@@ -104,7 +101,7 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
      * @return mixed Method return.
      * @internal param object $object Instantiated object that we will run method on.
      */
-    protected function invokeMethod($methodName, array $parameters = array())
+    protected function invokeMethod($methodName, array $parameters = [])
     {
         $reflection = new ReflectionClass(get_class($this->getDriver()));
         $method = $reflection->getMethod($methodName);
@@ -116,7 +113,7 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
     public function testGetKeyValue()
     {
         $values = ['key' => 'dummy 1', 'range' => 'dummy 2'];
-        $result = $this->invokeMethod('getKeyValues', array($values, $this->getClassMetadata()));
+        $result = $this->invokeMethod('getKeyValues', [$values, $this->getClassMetadata()]);
         $this->assertInternalType('array', $result);
         $this->assertArrayHasKey('key', $result);
         $this->assertArrayHasKey('range', $result);
@@ -129,8 +126,8 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
      */
     public function testGetKeyValueException()
     {
-        $this->invokeMethod('getKeyValues', array(['key' => 'dummy 1'], $this->getClassMetadata()));
-        $this->invokeMethod('getKeyValues', array(['range' => 'dummy 1'], $this->getClassMetadata()));
+        $this->invokeMethod('getKeyValues', [['key' => 'dummy 1'], $this->getClassMetadata()]);
+        $this->invokeMethod('getKeyValues', [['range' => 'dummy 1'], $this->getClassMetadata()]);
     }
 
     public function testMapTypeField()
@@ -154,7 +151,6 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
                 'key' => 'dummy 1',
                 'range' => 'dummy 1']
         );
-
     }
 
     public function testAddItemValues()
@@ -167,8 +163,6 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
         ];
 
         $result = $this->getDriver()->addItem($values, $this->getClassMetadata());
-        $this->assertInternalType('array',$result);
-
+        $this->assertInternalType('array', $result);
     }
-
 }

@@ -2,18 +2,8 @@
 
 namespace Eoko\ODM\Driver\DynamoDB;
 
-use Aws\DynamoDb\DynamoDbClient;
-use Aws\DynamoDb\Exception\DynamoDbException;
-use Aws\DynamoDb\Marshaler;
-use Aws\Sdk;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\ExpressionBuilder;
-use Eoko\ODM\DocumentManager\Driver\DriverInterface;
-use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Aws\Sdk as Aws;
 
 class DynamoDBDriverFactory implements FactoryInterface
@@ -36,5 +26,4 @@ class DynamoDBDriverFactory implements FactoryInterface
         $driver->setClient($client);
         return $driver;
     }
-
 }
