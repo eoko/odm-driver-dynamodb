@@ -90,7 +90,9 @@ class DynamoDBDriverTest extends PHPUnit_Framework_TestCase
      */
     protected function getDriver()
     {
-        return new Eoko\ODM\Driver\DynamoDB\DynamoDBDriver($this->getClient());
+        $driver = new Eoko\ODM\Driver\DynamoDB\DynamoDBDriver([]);
+        $driver->setClient($this->getClient());
+        return $driver;
     }
 
     /**
