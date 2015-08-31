@@ -50,6 +50,6 @@
     "require-dev": {
         "satooshi/php-coveralls": "0.6.*",
         "fabpot/php-cs-fixer": "1.7.*",
-        "phpunit/phpunit": "^5.0@dev"
+        "phpunit/phpunit": "~4.0"
     }
 }
