@@ -9,6 +9,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
+use Eoko\ODM\DocumentManager\Metadata\FieldInterface;
+use Eoko\ODM\Metadata\Annotation\Document;
 
 class DynamoDBDriver implements DriverInterface
 {
@@ -29,6 +31,7 @@ class DynamoDBDriver implements DriverInterface
     protected $typeMap = [
         'string' => 'S',
         'boolean' => 'BOOL',
+        'number' => 'N',
         'null' => 'NULL',
     ];
 
@@ -56,7 +59,53 @@ class DynamoDBDriver implements DriverInterface
     public function addItem(array $values, ClassMetadata $classMetadata)
     {
         $item = $this->getItemValues($values, $classMetadata);
-        return $this->commit('putItem', ['TableName' => $classMetadata->getDocument()->getTable(), 'Item' => $item]);
+        $args = ['TableName' => $classMetadata->getDocument()->getTable(), 'Item' => $item];
+
+        return $this->commit('putItem', $args);
+    }
+
+    /**
+     * @param array $values
+     * @param ClassMetadata $classMetadata
+     * @return array
+     */
+    private function getItemValues(array $values, ClassMetadata $classMetadata)
+    {
+        $mapped = array_map(function ($items) use ($values) {
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    if ($item instanceof FieldInterface) {
+                        if (isset($values[$item->getName()])) {
+                            $value = $values[$item->getName()];
+
+                            if($item->getType() == 'number') {
+                                $value = (string) $value;
+                            } elseif(empty($value) && $item->getType() !== 'number') {
+                                return;
+                            }
+
+                            return [$this->mapTypeField($item->getType()) => $value];
+                        }
+                    }
+                }
+            }
+        }, array_intersect_key($classMetadata->getFields(), $values));
+
+        return array_filter($mapped);
+    }
+
+    /**
+     * @param string $typeName
+     * @return string
+     */
+    private function mapTypeField($typeName)
+    {
+        return isset($this->typeMap[$typeName]) ? $this->typeMap[$typeName] : 'S';
+    }
+
+    protected function commit($command, $args)
+    {
+        return $this->client->$command($args);
     }
 
     /**
@@ -73,6 +122,30 @@ class DynamoDBDriver implements DriverInterface
     }
 
     /**
+     * @param array $values
+     * @param ClassMetadata $classMetadata
+     * @return array
+     */
+    private function getKeyValues(array $values, ClassMetadata $classMetadata)
+    {
+        return array_map(function ($item) use ($values, $classMetadata) {
+            if (!isset($values[$item['name']])) {
+                throw new MissingIdentifierException('The field `' . $item['name'] . '` is mandatory');
+            }
+            return [$this->mapTypeField($item['type']) => $values[$item['name']]];
+        }, $classMetadata->getIdentifier());
+    }
+
+    /**
+     * @param $result
+     * @return array|null
+     */
+    private function cleanResult($result)
+    {
+        return (is_array($result)) ? (new Marshaler())->unmarshalItem($result) : null;
+    }
+
+    /**
      * @param ClassMetadata $classMetadata
      * @return ArrayCollection
      * @throws \Exception
@@ -86,7 +159,6 @@ class DynamoDBDriver implements DriverInterface
             return $this->cleanResult($item);
         }, $items);
     }
-
 
     /**
      * @todo handle more criteria, only where can be used
@@ -164,23 +236,70 @@ class DynamoDBDriver implements DriverInterface
         return $this->commit('deleteItem', ['TableName' => $classMetadata->getDocument()->getTable(), 'Key' => $identifier]);
     }
 
-    protected function commit($command, $args)
+    /**
+     * @param ClassMetadata $classMetadata
+     * @return null
+     */
+    public function createTable(ClassMetadata $classMetadata)
     {
-        try {
-            $result = $this->client->$command($args);
-        } catch (DynamoDbException $exception) {
-            $result = $this->mapDynamoDbExceptionResult($exception);
+        $attributesList = [];
+        $model = ['AttributeDefinitions' => [], 'KeySchema' => [], 'ProvisionedThroughput' => [
+            'ReadCapacityUnits' => 1,
+            'WriteCapacityUnits' => 1
+        ]];
+
+        $metadata = $classMetadata->getClass();
+
+        if(isset($metadata['Eoko\ODM\Metadata\Annotation\GlobalSecondaryIndexes'])) {
+            $model['GlobalSecondaryIndexes'] = [];
+            $indexes = $metadata['Eoko\ODM\Metadata\Annotation\GlobalSecondaryIndexes']->indexes;
+            foreach($indexes as $key => $index) {
+
+                $keys = [];
+
+                foreach($index['keys'] as $item) {
+                    $keys[] = ['AttributeName' => $item['name'], 'KeyType' => $item['type']];
+                    $attributesList[$item['name']] = ['AttributeName' => $item['name'], 'AttributeType' => $this->mapTypeField($classMetadata->getTypeOfField($item['name']))];
+                }
+
+
+                $model['GlobalSecondaryIndexes'][$key]['IndexName'] = $index['name'];
+                $model['GlobalSecondaryIndexes'][$key]['KeySchema'] = $keys;
+                $model['GlobalSecondaryIndexes'][$key]['Projection'] = ['ProjectionType' => $index['projection']['projection-type']];
+                $model['GlobalSecondaryIndexes'][$key]['ProvisionedThroughput'] = [
+                    'ReadCapacityUnits' => 1,
+                    'WriteCapacityUnits' => 1
+                ];
+
+            }
         }
-        return $result;
+
+        foreach($classMetadata->getIdentifier() as $key => $field) {
+                $attributesList[$key] = [
+                    'AttributeName' => $field['name'],
+                    'AttributeType' => $this->mapTypeField($field['type'])
+                ];
+
+                $model['KeySchema'][] = [
+                    'AttributeName' => $field['name'],
+                    'KeyType' => $field['key']
+                ];
+        }
+
+        $model['AttributeDefinitions'] = array_values($attributesList);
+        $model['TableName'] = $classMetadata->getDocument()->getTable();
+
+        return $this->commit('createTable', $model);
     }
 
     /**
-     * @param $result
-     * @return array|null
+     *
+     * @param ClassMetadata $classMetadata
+     * @return null
      */
-    private function cleanResult($result)
+    public function deleteTable(ClassMetadata $classMetadata)
     {
-        return (is_array($result)) ? (new Marshaler())->unmarshalItem($result) : null;
+        return $this->commit('deleteTable', ['TableName' => $classMetadata->getDocument()->getTable()]);
     }
 
     /**
@@ -191,56 +310,9 @@ class DynamoDBDriver implements DriverInterface
     {
         switch ($exception->getAwsErrorCode()) {
             case 'ResourceNotFoundException' :
-                return;
-                break;
+                return false;
             default :
                 throw $exception;
         }
-    }
-
-
-    /**
-     * @param string $typeName
-     * @return string
-     */
-    private function mapTypeField($typeName)
-    {
-        return isset($this->typeMap[$typeName]) ? $this->typeMap[$typeName] : 'S';
-    }
-
-    /**
-     * @param array $values
-     * @param ClassMetadata $classMetadata
-     * @return array
-     */
-    private function getKeyValues(array $values, ClassMetadata $classMetadata)
-    {
-        return array_map(function ($item) use ($values, $classMetadata) {
-            if (!isset($values[$item['name']])) {
-                throw new MissingIdentifierException('The field of type `' . $item['name'] . '` is mandatory');
-            }
-            return [$this->mapTypeField($item['type']) => $values[$item['name']]];
-        }, $classMetadata->getIdentifier());
-    }
-    /**
-     * @param array $values
-     * @param ClassMetadata $classMetadata
-     * @return array
-     */
-    private function getItemValues(array $values, ClassMetadata $classMetadata)
-    {
-        $mapped = array_map(function ($items) use ($values) {
-            if (is_array($items)) {
-                foreach ($items as $item) {
-                    if ($item instanceof AbstractField) {
-                        if (isset($values[$item->name]) && !empty($values[$item->name])) {
-                            return [$this->mapTypeField($item->type) => $values[$item->name]];
-                        }
-                    }
-                }
-            }
-        }, array_intersect_key($classMetadata->getFields(), $values));
-
-        return array_filter($mapped);
     }
 }
