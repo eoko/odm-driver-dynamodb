@@ -42,7 +42,6 @@
         "doctrine/common": "~2.6@dev",
         "zendframework/zend-filter": "~2.5@dev",
         "zendframework/zend-cache": "~2.5@dev",
-        "cocur/slugify": "dev-master",
         "mockery/mockery": "^1.0@dev",
         "eoko/odm/document-manager": "dev-master"
     },
