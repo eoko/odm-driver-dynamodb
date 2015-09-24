@@ -22,7 +22,7 @@ class DynamoDBDriver implements DriverInterface
     protected $classMetadata;
 
     /** @var string */
-    protected $tableName = 'default';
+    protected $tableName;
 
     /**
      * @see http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
@@ -36,6 +36,8 @@ class DynamoDBDriver implements DriverInterface
     ];
 
     protected $options;
+    
+    protected $prefix = 'default_';
 
     /**
      * @param $options
@@ -43,6 +45,10 @@ class DynamoDBDriver implements DriverInterface
     public function __construct($options)
     {
         $this->options = $options;
+        
+        if(isset($options['prefix']) && is_string($options['prefix'])) {
+            $this->prefix = $options['prefix'];
+        }
     }
 
     public function setClient(DynamoDbClient $client)
@@ -59,7 +65,7 @@ class DynamoDBDriver implements DriverInterface
     public function addItem(array $values, ClassMetadata $classMetadata)
     {
         $item = $this->getItemValues($values, $classMetadata);
-        $args = ['TableName' => $classMetadata->getDocument()->getTable(), 'Item' => $item];
+        $args = ['TableName' => $this->getTableName($classMetadata), 'Item' => $item];
 
         return $this->commit('putItem', $args);
     }
@@ -117,7 +123,7 @@ class DynamoDBDriver implements DriverInterface
     public function getItem(array $values, ClassMetadata $classMetadata)
     {
         $identifier = $this->getKeyValues($values, $classMetadata);
-        $result = $this->commit('getItem', ['TableName' => $classMetadata->getDocument()->getTable(), 'Key' => $identifier]);
+        $result = $this->commit('getItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $identifier]);
         return $this->cleanResult($result->get('Item'));
     }
 
@@ -152,7 +158,7 @@ class DynamoDBDriver implements DriverInterface
      */
     public function findAll(ClassMetadata $classMetadata)
     {
-        $result = $this->commit('scan', ['TableName' => $classMetadata->getDocument()->getTable()]);
+        $result = $this->commit('scan', ['TableName' => $this->getTableName($classMetadata)]);
         $items = $result->get('Items');
 
         return array_map(function ($item) {
@@ -179,7 +185,7 @@ class DynamoDBDriver implements DriverInterface
         }, $tokens);
 
         $request = [
-            'TableName' => $classMetadata->getDocument()->getTable(),
+            'TableName' => $this->getTableName($classMetadata),
             'FilterExpression' => $expression['expression'],
             'ExpressionAttributeValues' => $tokens,
         ];
@@ -216,12 +222,16 @@ class DynamoDBDriver implements DriverInterface
         return $this->commit(
             'updateItem',
             [
-                'TableName' => $classMetadata->getDocument()->getTable(),
+                'TableName' => $this->getTableName($classMetadata),
                 'Key' => $identifier,
                 'UpdateExpression' => 'SET ' . implode(', ', $updateExpression),
                 'ExpressionAttributeValues' => $expressionAttribute
             ]
         );
+    }
+    
+    protected function getTableName($classMetadata) {
+        return $this->prefix . $classMetadata->getDocument()->getTable();
     }
 
     /**
@@ -233,7 +243,7 @@ class DynamoDBDriver implements DriverInterface
     public function deleteItem(array $values, ClassMetadata $classMetadata)
     {
         $identifier = $this->getKeyValues($values, $classMetadata);
-        return $this->commit('deleteItem', ['TableName' => $classMetadata->getDocument()->getTable(), 'Key' => $identifier]);
+        return $this->commit('deleteItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $identifier]);
     }
 
     /**
@@ -287,7 +297,7 @@ class DynamoDBDriver implements DriverInterface
         }
 
         $model['AttributeDefinitions'] = array_values($attributesList);
-        $model['TableName'] = $classMetadata->getDocument()->getTable();
+        $model['TableName'] = $this->getTableName($classMetadata);
 
         return $this->commit('createTable', $model);
     }
@@ -299,20 +309,7 @@ class DynamoDBDriver implements DriverInterface
      */
     public function deleteTable(ClassMetadata $classMetadata)
     {
-        return $this->commit('deleteTable', ['TableName' => $classMetadata->getDocument()->getTable()]);
+        return $this->commit('deleteTable', ['TableName' => $this->getTableName($classMetadata)]);
     }
 
-    /**
-     * @param DynamoDbException $exception
-     * @return null
-     */
-    private function mapDynamoDbExceptionResult(DynamoDbException $exception)
-    {
-        switch ($exception->getAwsErrorCode()) {
-            case 'ResourceNotFoundException' :
-                return false;
-            default :
-                throw $exception;
-        }
-    }
 }

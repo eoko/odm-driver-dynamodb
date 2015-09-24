@@ -46,6 +46,24 @@ Get Started
 
 @todo
 
+Configuration
+-------------
+
+
+    'eoko' => [
+        'odm' => [
+            'driver' => [
+                'name' => 'Eoko\\ODM\\Driver\\DynamoDB',
+                'options' => [
+                    'autoload' => [
+                        'Eoko\\ODM\\Driver\\DynamoDB' => __DIR__ . '/../src/'
+                    ],
+                    'prefix' => 'dev',
+                ],
+            ],
+        ],
+    ],
+
 Events
 ------
 
