@@ -36,6 +36,8 @@
     },
 
     "require": {
+        "aws/aws-sdk-php": "~3.2",
+        "aws/aws-sdk-php-zf2": "2.*",
         "zendframework/zend-servicemanager": "^2.5@dev",
         "zendframework/zend-eventmanager": "^2.5@dev",
         "aws/aws-sdk-php": "~3.0@dev",
