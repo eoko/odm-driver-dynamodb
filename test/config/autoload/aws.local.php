@@ -8,7 +8,7 @@ return [
                 'name' => 'Eoko\\ODM\\Driver\\DynamoDB',
                 'logger' => 'Log\App',
                 'options' => [
-                    'prefix' => 'test_',
+                    'prefix' => getenv('TRAVIS_JOB_ID') . '_test_',
                 ],
             ],
         ],
