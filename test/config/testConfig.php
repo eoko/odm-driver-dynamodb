@@ -9,8 +9,8 @@ return [
     // Retrieve the list of modules for this application.
     'modules' => [
         'AwsModule',
-        'Eoko\\ODM\\DocumentManager',
-        'Eoko\\ODM\\Metadata\\Annotation',
+        'Eoko\ODM\DocumentManager',
+        'Eoko\ODM\Metadata\Annotation',
     ],
     // This should be an array of paths in which modules reside.
     // If a string key is provided, the listener will consider that a module
