@@ -10,7 +10,7 @@ return [
     'modules' => [
         'AwsModule',
         'Eoko\ODM\DocumentManager',
-        'Eoko\ODM\Metadata\Annotations',
+        'Eoko\ODM\Metadata\Annotation',
     ],
     // This should be an array of paths in which modules reside.
     // If a string key is provided, the listener will consider that a module
