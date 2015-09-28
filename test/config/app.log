@@ -1,0 +1,23 @@
+2015-09-28T03:24:19+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> createTable {"AttributeDefinitions":"[{\"AttributeName\":\"is_default\",\"AttributeType\":\"S\"},{\"AttributeName\":\"scope_name\",\"AttributeType\":\"S\"}]","KeySchema":"[{\"AttributeName\":\"scope_name\",\"KeyType\":\"HASH\"}]","ProvisionedThroughput":"{\"ReadCapacityUnits\":1,\"WriteCapacityUnits\":1}","GlobalSecondaryIndexes":"[{\"IndexName\":\"is_default_index\",\"KeySchema\":[{\"AttributeName\":\"is_default\",\"KeyType\":\"HASH\"}],\"Projection\":{\"ProjectionType\":\"ALL\"},\"ProvisionedThroughput\":{\"ReadCapacityUnits\":1,\"WriteCapacityUnits\":1}}]","TableName":"test_scope"}
+2015-09-28T03:24:20+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:20+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:22+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> putItem {"TableName":"test_scope","Item":"{\"scope_name\":{\"S\":\"scope_1\"}}"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> getItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_1\"}}"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> putItem {"TableName":"test_scope","Item":"{\"scope_name\":{\"S\":\"scope_2\"},\"is_default\":{\"S\":\"true\"}}"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> getItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_2\"}}"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> putItem {"TableName":"test_scope","Item":"{\"scope_name\":{\"S\":\"scope_3\"},\"is_default\":{\"S\":\"false\"}}"}
+2015-09-28T03:24:28+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> getItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_3\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> putItem {"TableName":"test_scope","Item":"{\"scope_name\":{\"S\":\"scope_4\"},\"is_default\":{\"S\":\"true\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> getItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_4\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> scan {"TableName":"test_scope"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> scan {"TableName":"test_scope","FilterExpression":"is_default = :5608b2ed46586","ExpressionAttributeValues":"{\":5608b2ed46586\":{\"S\":\"true\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> scan {"TableName":"test_scope","FilterExpression":"is_default = :5608b2ed5575f","ExpressionAttributeValues":"{\":5608b2ed5575f\":{\"S\":\"true\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> deleteItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_4\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> deleteItem {"TableName":"test_scope","Key":"{\"scope_name\":{\"S\":\"scope_2\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> scan {"TableName":"test_scope","FilterExpression":"is_default = :5608b2ed8c56b","ExpressionAttributeValues":"{\":5608b2ed8c56b\":{\"S\":\"true\"}}"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> deleteTable {"TableName":"test_scope"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:29+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}
+2015-09-28T03:24:31+00:00 DEBUG (7): Eoko\ODM\Driver\DynamoDB\DynamoDBDriver >> describeTable {"TableName":"test_scope"}

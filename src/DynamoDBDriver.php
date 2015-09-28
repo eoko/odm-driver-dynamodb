@@ -3,14 +3,13 @@
 namespace Eoko\ODM\Driver\DynamoDB;
 
 use Aws\DynamoDb\DynamoDbClient;
-use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
 use Eoko\ODM\DocumentManager\Metadata\FieldInterface;
-use Eoko\ODM\Metadata\Annotation\Document;
+use Zend\Log\Logger;
+use Zend\Log\LoggerInterface;
 
 class DynamoDBDriver implements DriverInterface
 {
@@ -35,25 +34,41 @@ class DynamoDBDriver implements DriverInterface
         'null' => 'NULL',
     ];
 
+    /**
+     * @see http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
+     * @var array
+     */
+    protected $keyTypeMap = [
+        'binary' => 'B',
+        'number' => 'N',
+        'string' => 'S',
+    ];
+
     protected $options;
-    
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
     protected $prefix = 'default_';
 
     /**
      * @param $options
      */
-    public function __construct($options)
+    public function __construct($options, $client, $logger = null)
     {
         $this->options = $options;
-        
-        if(isset($options['prefix']) && is_string($options['prefix'])) {
+        $this->client = $client;
+
+        if (isset($options['prefix']) && is_string($options['prefix'])) {
             $this->prefix = $options['prefix'];
         }
-    }
 
-    public function setClient(DynamoDbClient $client)
-    {
-        $this->client = $client;
+        if ($logger instanceof LoggerInterface) {
+            $this->logger = $logger;
+        }
+
     }
 
     /**
@@ -79,25 +94,36 @@ class DynamoDBDriver implements DriverInterface
     {
         $mapped = array_map(function ($items) use ($values) {
             if (is_array($items)) {
-                foreach ($items as $item) {
-                    if ($item instanceof FieldInterface) {
-                        if (isset($values[$item->getName()])) {
-                            $value = $values[$item->getName()];
-
-                            if($item->getType() == 'number') {
-                                $value = (string) $value;
-                            } elseif(empty($value) && $item->getType() !== 'number') {
-                                return;
-                            }
-
-                            return [$this->mapTypeField($item->getType()) => $value];
-                        }
+                foreach ($items as $field) {
+                    if ($field instanceof FieldInterface) {
+                        return $this->mapField($field, $values);
                     }
                 }
             }
         }, array_intersect_key($classMetadata->getFields(), $values));
 
         return array_filter($mapped);
+    }
+
+    private function mapField($field, $values)
+    {
+        $value = $values[$field->getName()];
+
+        if (is_null($value)) {
+            return;
+        }
+
+        $type = $this->mapTypeField($field->getType());
+
+        if ($field->getType() === 'number') {
+            $value = (string) $value;
+        }
+
+        if ($field->getType() === 'boolean') {
+            $value = (boolean) $value;
+        }
+
+        return [$type => $value];
     }
 
     /**
@@ -109,8 +135,20 @@ class DynamoDBDriver implements DriverInterface
         return isset($this->typeMap[$typeName]) ? $this->typeMap[$typeName] : 'S';
     }
 
+    /**
+     * @param string $typeName
+     * @return string
+     */
+    private function mapKeyTypeField($typeName)
+    {
+        return isset($this->keyTypeMap[$typeName]) ? $this->keyTypeMap[$typeName] : null;
+    }
+
     protected function commit($command, $args)
     {
+        if($this->logger) {
+            $this->logger->debug( __CLASS__ . ' >> ' . $command, $args);
+        }
         return $this->client->$command($args);
     }
 
@@ -153,7 +191,7 @@ class DynamoDBDriver implements DriverInterface
 
     /**
      * @param ClassMetadata $classMetadata
-     * @return ArrayCollection
+     * @return array
      * @throws \Exception
      */
     public function findAll(ClassMetadata $classMetadata)
@@ -229,8 +267,9 @@ class DynamoDBDriver implements DriverInterface
             ]
         );
     }
-    
-    protected function getTableName($classMetadata) {
+
+    protected function getTableName($classMetadata)
+    {
         return $this->prefix . $classMetadata->getDocument()->getTable();
     }
 
@@ -258,42 +297,46 @@ class DynamoDBDriver implements DriverInterface
             'WriteCapacityUnits' => 1
         ]];
 
-        $metadata = $classMetadata->getClass();
-
-        if(isset($metadata['Eoko\ODM\Metadata\Annotation\GlobalSecondaryIndexes'])) {
+        if (count($classMetadata->getIndexes()) > 0) {
             $model['GlobalSecondaryIndexes'] = [];
-            $indexes = $metadata['Eoko\ODM\Metadata\Annotation\GlobalSecondaryIndexes']->indexes;
-            foreach($indexes as $key => $index) {
-
+            foreach ($classMetadata->getIndexes() as $index) {
                 $keys = [];
 
-                foreach($index['keys'] as $item) {
-                    $keys[] = ['AttributeName' => $item['name'], 'KeyType' => $item['type']];
-                    $attributesList[$item['name']] = ['AttributeName' => $item['name'], 'AttributeType' => $this->mapTypeField($classMetadata->getTypeOfField($item['name']))];
+                foreach ($index['fields'] as $key => $type) {
+                    $keys[] = ['AttributeName' => $key, 'KeyType' => $type];
+                    $attributeType = $this->mapKeyTypeField($classMetadata->getTypeOfField($key));
+
+                    if (is_null($attributeType)) {
+                        throw new IncompatibleTypeException('We cannot create a GSI with key `' . $key . '` and type `' . $classMetadata->getTypeOfField($key) . '`.');
+                    }
+
+                    $attributesList[$key] = ['AttributeName' => $key, 'AttributeType' => $attributeType];
                 }
 
-
-                $model['GlobalSecondaryIndexes'][$key]['IndexName'] = $index['name'];
-                $model['GlobalSecondaryIndexes'][$key]['KeySchema'] = $keys;
-                $model['GlobalSecondaryIndexes'][$key]['Projection'] = ['ProjectionType' => $index['projection']['projection-type']];
-                $model['GlobalSecondaryIndexes'][$key]['ProvisionedThroughput'] = [
-                    'ReadCapacityUnits' => 1,
-                    'WriteCapacityUnits' => 1
+                $model['GlobalSecondaryIndexes'][] = [
+                    'IndexName' => $index['name'],
+                    'KeySchema' => $keys,
+                    'Projection' => [
+                        'ProjectionType' => 'ALL'
+                    ],
+                    'ProvisionedThroughput' => [
+                        'ReadCapacityUnits' => 1,
+                        'WriteCapacityUnits' => 1
+                    ]
                 ];
-
             }
         }
 
-        foreach($classMetadata->getIdentifier() as $key => $field) {
-                $attributesList[$key] = [
-                    'AttributeName' => $field['name'],
-                    'AttributeType' => $this->mapTypeField($field['type'])
-                ];
+        foreach ($classMetadata->getIdentifier() as $key => $field) {
+            $attributesList[$key] = [
+                'AttributeName' => $field['name'],
+                'AttributeType' => $this->mapTypeField($field['type'])
+            ];
 
-                $model['KeySchema'][] = [
-                    'AttributeName' => $field['name'],
-                    'KeyType' => $field['key']
-                ];
+            $model['KeySchema'][] = [
+                'AttributeName' => $field['name'],
+                'KeyType' => $field['key']
+            ];
         }
 
         $model['AttributeDefinitions'] = array_values($attributesList);
@@ -312,4 +355,21 @@ class DynamoDBDriver implements DriverInterface
         return $this->commit('deleteTable', ['TableName' => $this->getTableName($classMetadata)]);
     }
 
+    /**
+     * @param ClassMetadata $classMetadata
+     * @return boolean
+     */
+    public function isTable(ClassMetadata $classMetadata)
+    {
+        return $this->getTableStatus($classMetadata) !== 'DELETING';
+    }
+
+    public function getTableStatus(ClassMetadata $classMetadata)
+    {
+        try {
+            return $this->commit('describeTable', ['TableName' => $this->getTableName($classMetadata)])->get('Table')['TableStatus'];
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }

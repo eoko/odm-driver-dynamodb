@@ -2,28 +2,30 @@
 
 namespace Eoko\ODM\Driver\DynamoDB;
 
+use Aws\Sdk as Aws;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Aws\Sdk as Aws;
+use Zend\Stdlib\Hydrator\HydratorPluginManager;
 
 class DynamoDBDriverFactory implements FactoryInterface
 {
+
     /**
      * Create service
      *
-     * @param ServiceLocatorInterface $serviceLocator
+     * @param ServiceLocatorInterface $sl
      * @return mixed
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function createService(ServiceLocatorInterface $sl)
     {
-        $config = $serviceLocator->get('Config') ;
-        $options = $config['eoko']['odm']['driver']['options'];
+        $config = $sl->get('Config')['eoko']['odm']['driver'];
 
-        $aws = $serviceLocator->get(Aws::class);
+        $options = isset($config['options']) ? $config['options'] : [];
+        $logger = isset($config['logger']) && $sl->has($config['logger']) ? $sl->get($config['logger']) : null;
+
+        $aws = $sl->get(Aws::class);
         $client = $aws->createDynamoDb();
 
-        $driver = new DynamoDBDriver($options);
-        $driver->setClient($client);
-        return $driver;
+        return new DynamoDBDriver($options, $client, $logger);
     }
 }

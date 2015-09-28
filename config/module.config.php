@@ -17,5 +17,5 @@ return [
         'factories' => [
             'Eoko\\ODM\\Driver\\DynamoDB' => 'Eoko\\ODM\\Driver\\DynamoDB\\DynamoDBDriverFactory'
         ]
-    ]
+    ],
 ];
