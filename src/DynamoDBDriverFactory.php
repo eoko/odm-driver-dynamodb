@@ -5,7 +5,6 @@ namespace Eoko\ODM\Driver\DynamoDB;
 use Aws\Sdk as Aws;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\Stdlib\Hydrator\HydratorPluginManager;
 
 class DynamoDBDriverFactory implements FactoryInterface
 {

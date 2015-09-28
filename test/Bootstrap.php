@@ -67,18 +67,18 @@ class Bootstrap
         $serviceManager->get('ModuleManager')->loadModules();
 
         $serviceManager->setService('Log\App', new Logger(
-                array('writers' =>
-                    array(
-                        array(
+                ['writers' =>
+                    [
+                        [
                             'name' => 'stream',
                             'priority' => 1000,
-                            'options' => array(
+                            'options' => [
                                 'stream' => __DIR__ . '/config/app.log',
-                            ),
+                            ],
                             'filter' => Logger::DEBUG,
-                        ),
-                    ),
-                )
+                        ],
+                    ],
+                ]
             )
         );
 

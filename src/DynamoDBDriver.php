@@ -68,7 +68,6 @@ class DynamoDBDriver implements DriverInterface
         if ($logger instanceof LoggerInterface) {
             $this->logger = $logger;
         }
-
     }
 
     /**
@@ -146,8 +145,8 @@ class DynamoDBDriver implements DriverInterface
 
     protected function commit($command, $args)
     {
-        if($this->logger) {
-            $this->logger->debug( __CLASS__ . ' >> ' . $command, $args);
+        if ($this->logger) {
+            $this->logger->debug(__CLASS__ . ' >> ' . $command, $args);
         }
         return $this->client->$command($args);
     }
