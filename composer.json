@@ -1,6 +1,6 @@
 {
     "name": "eoko/odm/driver/dynamo-db",
-    "description":"Simple ODM that work fine with DynamoDB",
+    "description":"DynamoDB driver for Eoko ODM",
     "keywords":["DynamoDB", "ODM"],
     "type":"library",
     "license":"MIT",
@@ -24,9 +24,6 @@
         },{
             "type": "vcs",
             "url": "https://github.com/eoko/odm-metadata-annotation"
-        },{
-            "type": "vcs",
-            "url": "git@github.com:eoko/odm-fixture.git"
         }
     ],
 
@@ -46,19 +43,17 @@
         "aws/aws-sdk-php-zf2": "2.*",
         "zendframework/zend-servicemanager": "^2.5@dev",
         "zendframework/zend-eventmanager": "^2.5@dev",
-        "aws/aws-sdk-php": "~3.0@dev",
-        "doctrine/common": "~2.6@dev",
         "zendframework/zend-filter": "~2.5@dev",
         "zendframework/zend-cache": "~2.5@dev",
-        "mockery/mockery": "^1.0@dev",
+        "doctrine/common": "~2.6@dev",
         "eoko/odm/document-manager": "dev-master",
-        "eoko/odm/metadata/annotation": "dev-master",
-        "eoko/odm/fixture": "dev-master"
+        "eoko/odm/metadata/annotation": "dev-master"
     },
 
     "require-dev": {
         "zendframework/zendframework": "^2.5@dev",
         "satooshi/php-coveralls": "0.6.*",
+        "mockery/mockery": "^1.0@dev",
         "fabpot/php-cs-fixer": "1.7.*",
         "phpunit/phpunit": "~4.0"
     }
