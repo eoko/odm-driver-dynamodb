@@ -2,7 +2,6 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Test;
 
-use Aws\Result;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\ExpressionBuilder;
 use Eoko\ODM\Driver\DynamoDB\Test\Entity\ScopeEntity;
@@ -45,6 +44,38 @@ class DynamoDBDriverTableScopeTest extends BaseTestCase
         ];
     }
 
+    public function scopeListNotValid()
+    {
+        return [
+            [
+                [
+                    'scope' => 'not valid'
+                ],
+                [
+                    'scope_name' => 12
+                ],
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider scopeListNotValid
+     * @expectedException \Eoko\ODM\Driver\DynamoDB\MissingIdentifierException
+     */
+    public function testCreateNotValidEntity($data)
+    {
+        $this->getDriver()->addItem($data, $this->getClassMetadata());
+    }
+
+    /**
+     * @dataProvider scopeListNotValid
+     * @expectedException \Eoko\ODM\Driver\DynamoDB\MissingIdentifierException
+     */
+    public function testDeleteNotValidEntity($data)
+    {
+        $this->getDriver()->deleteItem($data, $this->getClassMetadata());
+    }
+
     /**
      * @dataProvider scopeList
      */
@@ -57,7 +88,8 @@ class DynamoDBDriverTableScopeTest extends BaseTestCase
         $result = $this->getDriver()->addItem($item, $this->getClassMetadata());
         $actual = $this->getDriver()->getItem(['scope_name' => $scope->getScopeName()], $this->getClassMetadata());
 
-        $this->assertInstanceOf(Result::class, $result);
+
+        $this->assertTrue($item == $result);
         $this->assertTrue($item == $actual);
     }
 
@@ -66,44 +98,30 @@ class DynamoDBDriverTableScopeTest extends BaseTestCase
      */
     public function testSearchEntity()
     {
-        $entity = new ScopeEntity();
-        $entity->setScopeName('scope_1');
-
         $result = $this->getDriver()->findAll($this->getClassMetadata());
-
-        foreach ($result as $key => $item) {
-            unset($result[$key]);
-            $result[$item['scope_name']] = $item;
-        }
-
-        $scopes = [];
-        foreach ($this->scopeList() as $list) {
-            foreach ($list as $scope) {
-                $scopes[$scope['scope_name']] = $scope;
-            }
-        }
-
-        foreach ($scopes as $scope_name => $scope) {
-            $this->assertTrue($result[$scope_name] == $scope);
-        }
+        $this->assertInternalType('array', $result);
+        $this->assertEquals(4, count($result));
 
         $criteria = new Criteria();
         $exp = new ExpressionBuilder();
 
         $criteria->where($exp->eq('is_default', 'true'));
-
-        $result = $this->getDriver()->findBy($criteria, null, $this->getClassMetadata());
-
+        $result = $this->getDriver()->findBy($criteria, $this->getClassMetadata());
         $this->assertEquals(2, count($result));
 
-        while (count($result) > 0) {
-            $scope = array_pop($result);
-            $this->assertTrue($scopes[$scope['scope_name']] == $scope);
+        foreach ($this->scopeList() as $scope) {
+            $criteria = new Criteria();
+            $exp = new ExpressionBuilder();
+
+            $criteria->where($exp->eq('scope_name', $scope[0]['scope_name']));
+            $result = $this->getDriver()->findBy($criteria, $this->getClassMetadata());
+            $this->assertTrue($result[0] == $scope[0]);
+            $this->assertEquals(1, count($result));
         }
     }
 
     /**
-     * @depends testCreateEntity
+     * @depends testSearchEntity
      */
     public function testDeleteWithGlobalIndexEntity()
     {
@@ -111,15 +129,16 @@ class DynamoDBDriverTableScopeTest extends BaseTestCase
         $exp = new ExpressionBuilder();
 
         $criteria->where($exp->eq('is_default', 'true'));
-        $result = $this->getDriver()->findBy($criteria, null, $this->getClassMetadata());
+        $result = $this->getDriver()->findBy($criteria, $this->getClassMetadata());
 
         $this->assertEquals(2, count($result));
 
         foreach ($result as $item) {
-            $this->getDriver()->deleteItem(['scope_name' => $item['scope_name']], $this->getClassMetadata());
+            $result = $this->getDriver()->deleteItem(['scope_name' => $item['scope_name']], $this->getClassMetadata());
+            $this->assertTrue($result);
         }
 
-        $result = $this->getDriver()->findBy($criteria, null, $this->getClassMetadata());
+        $result = $this->getDriver()->findBy($criteria, $this->getClassMetadata());
         $this->assertEquals(0, count($result));
     }
 

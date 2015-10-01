@@ -2,7 +2,6 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Test;
 
-use Aws\Result;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\ExpressionBuilder;
 use Eoko\ODM\Driver\DynamoDB\Test\Entity\UserEntity;
@@ -21,7 +20,7 @@ class DynamoDBDriverTableUserTest extends BaseTestCase
         return [
             [
                 [
-                    'username' => 'john'
+                    'username' => 'john',
                 ]
             ],
             [
@@ -61,15 +60,11 @@ class DynamoDBDriverTableUserTest extends BaseTestCase
      */
     public function testCreateEntity($data)
     {
-        $user = new UserEntity();
-        $user->exchangeArray($data);
-        $item = $user->getArrayCopy();
+        $result = $this->getDriver()->addItem($data, $this->getClassMetadata());
+        $this->assertTrue($data == $result);
 
-        $result = $this->getDriver()->addItem($item, $this->getClassMetadata());
-        $actual = $this->getDriver()->getItem(['username' => $user->getUsername()], $this->getClassMetadata());
-
-        $this->assertInstanceOf(Result::class, $result);
-        $this->assertTrue($item == $actual);
+        $result = $this->getDriver()->getItem(['username' => $data['username']], $this->getClassMetadata());
+        $this->assertTrue($data == $result);
     }
 
     /**
@@ -104,7 +99,7 @@ class DynamoDBDriverTableUserTest extends BaseTestCase
         foreach ($users as $username => $user) {
             $criteria->where($exp->eq('username', $username));
 
-            $result = $this->getDriver()->findBy($criteria, null, $this->getClassMetadata());
+            $result = $this->getDriver()->findBy($criteria, $this->getClassMetadata());
 
             $this->assertEquals(1, count($result));
             $this->assertTrue($users[$username] == array_pop($result));
@@ -116,9 +111,7 @@ class DynamoDBDriverTableUserTest extends BaseTestCase
      */
     public function testDeleteWithBasicIndexEntity()
     {
-        $entity = new UserEntity();
-        $entity->setUsername('john');
-        $this->assertInstanceOf(Result::class, $this->getDriver()->deleteItem($entity->getArrayCopy(), $this->getClassMetadata()));
+        $this->assertTrue($this->getDriver()->deleteItem(['username' => 'john'], $this->getClassMetadata()));
     }
 
     /**
@@ -126,12 +119,8 @@ class DynamoDBDriverTableUserTest extends BaseTestCase
      */
     public function testDeleteWithGlobalIndexEntity()
     {
-        $entity = new UserEntity();
-        $entity->setUsername('john');
-        $entity->setEmailVerified(false);
-
-        $this->getDriver()->addItem($entity->getArrayCopy(), $this->getClassMetadata());
-        $this->assertInstanceOf(Result::class, $this->getDriver()->deleteItem($entity->getArrayCopy(), $this->getClassMetadata()));
+        $this->getDriver()->addItem(['username' => 'john', 'email_verified' => true], $this->getClassMetadata());
+        $this->assertTrue($this->getDriver()->deleteItem(['username' => 'john', 'email_verified' => true], $this->getClassMetadata()));
     }
 
     public static function setUpBeforeClass()

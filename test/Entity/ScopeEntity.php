@@ -15,7 +15,7 @@ use Eoko\ODM\Metadata\Annotation\KeySchema;
 use Zend\Stdlib\ArraySerializableInterface;
 
 /**
- * @Document(table="scope", provision={"ReadCapacityUnits" : 1, "WriteCapacityUnits" : 1})
+ * @Document(table="scope", provision={"ReadCapacityUnits" : 2, "WriteCapacityUnits" : 2})
  * @KeySchema(keys={"scope_name" : "HASH"})
  * @Index(name="is_default_index", fields={"is_default" : "HASH"})
  */
