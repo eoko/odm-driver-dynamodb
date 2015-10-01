@@ -36,7 +36,7 @@
         "zendframework/zend-filter": "~2.5@dev",
         "zendframework/zend-cache": "~2.5@dev",
         "doctrine/common": "~2.6@dev",
-        "eoko/odm-document-manager": "dev-master"
+        "eoko/odm-documentmanager": "dev-master"
     },
 
     "require-dev": {
