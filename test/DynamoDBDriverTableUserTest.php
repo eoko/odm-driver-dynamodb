@@ -2,13 +2,9 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Test;
 
-use Aws\DynamoDb\Marshaler;
-use Aws\Result;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\ExpressionBuilder;
 use Eoko\ODM\Driver\DynamoDB\Test\Entity\UserEntity;
-use Eoko\ODM\Driver\DynamoDB\Transform\ValuesFromDynamoDB;
-use Eoko\ODM\Driver\DynamoDB\Transform\ValuesToDynamoDB;
 
 class DynamoDBDriverTableUserTest extends BaseTestCase
 {

@@ -2,11 +2,6 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Test;
 
-use Aws\Result;
-use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\ExpressionBuilder;
-use Eoko\ODM\Driver\DynamoDB\DynamoDBItemHydrator;
-use Eoko\ODM\Driver\DynamoDB\DynamoDBValuesHydrator;
 use Eoko\ODM\Driver\DynamoDB\Test\Entity\UserEntity;
 use Eoko\ODM\Driver\DynamoDB\Transform\ValuesFromDynamoDB;
 use Eoko\ODM\Driver\DynamoDB\Transform\ValuesToDynamoDB;
@@ -70,9 +65,8 @@ class DynamoDBDriverHydratorTest extends BaseTestCase
         $hydrator = new ValuesFromDynamoDB();
         $result = $hydrator->transform($item, $this->getClassMetadata()->getFields());
 
-        foreach($values as $key => $value) {
+        foreach ($values as $key => $value) {
             $this->assertEquals($value, $result[$key]);
         }
     }
-
 }

@@ -8,13 +8,10 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Transform;
 
-
-use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
 use Eoko\ODM\DocumentManager\Metadata\FieldInterface;
-use Zend\Stdlib\Hydrator\AbstractHydrator;
-use Zend\Stdlib\Hydrator\HydrationInterface;
 
-class ValuesFromDynamoDB {
+class ValuesFromDynamoDB
+{
 
     /**
      * Transform $values to a dynamoDB item
@@ -36,8 +33,9 @@ class ValuesFromDynamoDB {
         }, array_intersect_key($expectedFields, $values));
     }
 
-    private function mapToValue($value, $type) {
-        switch($type) {
+    private function mapToValue($value, $type)
+    {
+        switch ($type) {
             case 'boolean' :
                 return (boolean) $value;
             case 'string' :
@@ -52,5 +50,4 @@ class ValuesFromDynamoDB {
                 throw new \Exception('The following type `' . $type . '` is not supported by the driver.');
         }
     }
-
 }

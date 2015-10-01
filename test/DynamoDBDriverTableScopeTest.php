@@ -2,10 +2,8 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Test;
 
-use Aws\Result;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\ExpressionBuilder;
-use Eoko\ODM\Driver\DynamoDB\MissingIdentifierException;
 use Eoko\ODM\Driver\DynamoDB\Test\Entity\ScopeEntity;
 
 class DynamoDBDriverTableScopeTest extends BaseTestCase
@@ -120,7 +118,6 @@ class DynamoDBDriverTableScopeTest extends BaseTestCase
             $this->assertTrue($result[0] == $scope[0]);
             $this->assertEquals(1, count($result));
         }
-
     }
 
     /**

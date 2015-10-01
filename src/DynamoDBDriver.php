@@ -7,11 +7,9 @@ use Aws\DynamoDb\Marshaler;
 use Doctrine\Common\Collections\Criteria;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
-use Eoko\ODM\DocumentManager\Metadata\FieldInterface;
 use Exception;
 use Zend\Log\Logger;
 use Zend\Log\LoggerInterface;
-use ZF\Hal\EntityHydratorManager;
 
 class DynamoDBDriver implements DriverInterface
 {
@@ -80,12 +78,16 @@ class DynamoDBDriver implements DriverInterface
      */
     public function addItem(array $values, ClassMetadata $classMetadata)
     {
-        if (!$classMetadata->hasIndex($values)) throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        if (!$classMetadata->hasIndex($values)) {
+            throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        }
 
         $item = $this->marshaler->marshalItem($values);
         $args = ['TableName' => $this->getTableName($classMetadata), 'Item' => $item];
 
-        if (!$this->commit('putItem', $args)) throw new Exception('Somthing wrong');
+        if (!$this->commit('putItem', $args)) {
+            throw new Exception('Somthing wrong');
+        }
 
         return $values;
     }
@@ -98,13 +100,17 @@ class DynamoDBDriver implements DriverInterface
      */
     public function getItem(array $identifier, ClassMetadata $classMetadata)
     {
-        if (!$classMetadata->hasIndex($identifier)) throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        if (!$classMetadata->hasIndex($identifier)) {
+            throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        }
 
         $identifier = $this->getKeyValues($identifier, $classMetadata);
         $result = $this->commit('getItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $identifier]);
         $item = $result->get('Item');
 
-        if (!$item) return null;
+        if (!$item) {
+            return;
+        }
 
         return $this->marshaler->unmarshalItem($item);
     }
@@ -192,7 +198,9 @@ class DynamoDBDriver implements DriverInterface
      */
     public function deleteItem(array $values, ClassMetadata $classMetadata)
     {
-        if (!$classMetadata->hasIndex($values)) throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        if (!$classMetadata->hasIndex($values)) {
+            throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
+        }
 
         $result = $this->commit('deleteItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $this->getKeyValues($values, $classMetadata)]);
 

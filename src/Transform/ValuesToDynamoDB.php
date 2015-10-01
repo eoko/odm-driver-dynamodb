@@ -8,13 +8,10 @@
 
 namespace Eoko\ODM\Driver\DynamoDB\Transform;
 
-
-use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
 use Eoko\ODM\DocumentManager\Metadata\FieldInterface;
-use Zend\Stdlib\Hydrator\AbstractHydrator;
-use Zend\Stdlib\Hydrator\HydrationInterface;
 
-class ValuesToDynamoDB {
+class ValuesToDynamoDB
+{
 
     /**
      * @see http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
@@ -65,8 +62,9 @@ class ValuesToDynamoDB {
      * @return bool|string
      * @throws \Exception
      */
-    private function mapToField($value, FieldInterface $field) {
-        switch($field->getType()) {
+    private function mapToField($value, FieldInterface $field)
+    {
+        switch ($field->getType()) {
             case 'boolean' :
                 return (boolean) $value;
             case 'string' :
