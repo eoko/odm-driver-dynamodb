@@ -46,11 +46,11 @@
         "zendframework/zend-filter": "~2.5@dev",
         "zendframework/zend-cache": "~2.5@dev",
         "doctrine/common": "~2.6@dev",
-        "eoko/odm/document-manager": "dev-master",
-        "eoko/odm/metadata/annotation": "dev-master"
+        "eoko/odm/document-manager": "dev-master"
     },
 
     "require-dev": {
+        "eoko/odm/metadata/annotation": "dev-master",
         "zendframework/zendframework": "^2.5@dev",
         "satooshi/php-coveralls": "0.6.*",
         "mockery/mockery": "^1.0@dev",
