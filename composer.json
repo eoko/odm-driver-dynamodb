@@ -20,7 +20,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "git@github.com:eoko/odm-documentmanager.git"
+            "url": "https://github.com/eoko/odm-documentmanager.git"
         },{
             "type": "vcs",
             "url": "https://github.com/eoko/odm-metadata-annotation"
