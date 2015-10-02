@@ -93,23 +93,19 @@ class DynamoDBDriver implements DriverInterface
     }
 
     /**
-     * @param array $identifier
+     * @param array $identifiers
      * @param ClassMetadata $classMetadata
      * @return array|null
      * @throws Exception
      */
-    public function getItem(array $identifier, ClassMetadata $classMetadata)
+    public function getItem(array $identifiers, ClassMetadata $classMetadata)
     {
-        if (!$classMetadata->hasIndex($identifier)) {
-            throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
-        }
-
-        $identifier = $this->getKeyValues($identifier, $classMetadata);
-        $result = $this->commit('getItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $identifier]);
+        $identifiers = $this->getKeyValues($identifiers, $classMetadata);
+        $result = $this->commit('getItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $identifiers]);
         $item = $result->get('Item');
 
         if (!$item) {
-            return;
+            return null;
         }
 
         return $this->marshaler->unmarshalItem($item);
@@ -170,12 +166,12 @@ class DynamoDBDriver implements DriverInterface
     public function updateItem(array $identifiers, array $values, ClassMetadata $classMetadata)
     {
         $item = $this->marshaler->marshalItem($values);
-        $identifier = $this->getKeyValues($identifiers, $classMetadata);
+        $identifierFields = $this->getKeyValues($identifiers, $classMetadata);
 
         $expressionAttribute = [];
         $updateExpression = [];
 
-        foreach (array_diff_key($item, $identifier) as $key => $item) {
+        foreach (array_diff_key($item, $identifierFields) as $key => $item) {
             $expressionAttribute[':' . $key] = $item;
             $updateExpression[] = $key . ' = :' . $key;
         };
@@ -184,7 +180,7 @@ class DynamoDBDriver implements DriverInterface
             'updateItem',
             [
                 'TableName' => $this->getTableName($classMetadata),
-                'Key' => $identifier,
+                'Key' => $identifierFields,
                 'UpdateExpression' => 'SET ' . implode(', ', $updateExpression),
                 'ExpressionAttributeValues' => $expressionAttribute
             ]
@@ -199,14 +195,9 @@ class DynamoDBDriver implements DriverInterface
      * @return boolean
      * @throws Exception
      */
-    public function deleteItem(array $values, ClassMetadata $classMetadata)
+    public function deleteItem(array $identifiers, ClassMetadata $classMetadata)
     {
-        if (!$classMetadata->hasIndex($values)) {
-            throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
-        }
-
-        $result = $this->commit('deleteItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $this->getKeyValues($values, $classMetadata)]);
-
+        $result = $this->commit('deleteItem', ['TableName' => $this->getTableName($classMetadata), 'Key' => $this->getKeyValues($identifiers, $classMetadata)]);
         return $result ? true : false;
     }
 
