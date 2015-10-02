@@ -1,5 +1,5 @@
 {
-    "name": "eoko/odm/driver/dynamo-db",
+    "name": "eoko/odm-driver-dynamo-db",
     "description":"DynamoDB driver for Eoko ODM",
     "keywords":["DynamoDB", "ODM"],
     "type":"library",
