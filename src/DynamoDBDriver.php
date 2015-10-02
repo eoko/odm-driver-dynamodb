@@ -167,10 +167,11 @@ class DynamoDBDriver implements DriverInterface
      * @return null
      * @throws Exception
      */
-    public function updateItem(array $values, ClassMetadata $classMetadata)
+    public function updateItem(array $identifiers, array $values, ClassMetadata $classMetadata)
     {
-        $item = $this->getItemValues($values, $classMetadata);
-        $identifier = $this->getKeyValues($values, $classMetadata);
+        $item = $this->marshaler->marshalItem($values);
+        $identifier = $this->getKeyValues($identifiers, $classMetadata);
+
         $expressionAttribute = [];
         $updateExpression = [];
 
@@ -179,7 +180,7 @@ class DynamoDBDriver implements DriverInterface
             $updateExpression[] = $key . ' = :' . $key;
         };
 
-        return $this->commit(
+        $result = $this->commit(
             'updateItem',
             [
                 'TableName' => $this->getTableName($classMetadata),
@@ -188,6 +189,8 @@ class DynamoDBDriver implements DriverInterface
                 'ExpressionAttributeValues' => $expressionAttribute
             ]
         );
+
+        return $result ? $values : false;
     }
 
     /**
@@ -264,7 +267,7 @@ class DynamoDBDriver implements DriverInterface
         $model['AttributeDefinitions'] = array_values($attributesList);
         $model['TableName'] = $this->getTableName($classMetadata);
 
-        return $this->commit('createTable', $model);
+        return ($this->commit('createTable', $model)) ? true : false;
     }
 
     /**
@@ -274,7 +277,7 @@ class DynamoDBDriver implements DriverInterface
      */
     public function deleteTable(ClassMetadata $classMetadata)
     {
-        return $this->commit('deleteTable', ['TableName' => $this->getTableName($classMetadata)]);
+        return ($this->commit('deleteTable', ['TableName' => $this->getTableName($classMetadata)])) ? true : false;
     }
 
     /**
