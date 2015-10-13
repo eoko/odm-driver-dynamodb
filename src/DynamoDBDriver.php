@@ -213,9 +213,15 @@ class DynamoDBDriver implements DriverInterface
             'WriteCapacityUnits' => 1
         ]];
 
-        if (count($classMetadata->getIndexes()) > 0) {
+        $indexes = $classMetadata->getIndexes();
+        // We prevent that index from primary keys are not included
+        unset($indexes[$classMetadata->buildHash($classMetadata->getIdentifierFieldNames())]);
+
+
+        if (count($indexes) > 0) {
             $model['GlobalSecondaryIndexes'] = [];
-            foreach ($classMetadata->getIndexes() as $index) {
+
+            foreach ($indexes as $index) {
                 $keys = [];
 
                 foreach ($index['fields'] as $key => $type) {
