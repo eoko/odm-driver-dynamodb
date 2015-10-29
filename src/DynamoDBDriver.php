@@ -105,7 +105,7 @@ class DynamoDBDriver implements DriverInterface
         $item = $result->get('Item');
 
         if (!$item) {
-            return null;
+            return;
         }
 
         return $this->marshaler->unmarshalItem($item);
@@ -170,10 +170,13 @@ class DynamoDBDriver implements DriverInterface
 
         $expressionAttribute = [];
         $updateExpression = [];
+        $expressionAttributeName = [];
 
         foreach (array_diff_key($item, $identifierFields) as $key => $item) {
-            $expressionAttribute[':' . $key] = $item;
-            $updateExpression[] = $key . ' = :' . $key;
+            $prefix_key = 'prefix_' . $key;
+            $expressionAttributeName['#' . $prefix_key] = $key;
+            $expressionAttribute[':' . $prefix_key] = $item;
+            $updateExpression[] = '#' . $prefix_key . ' = :' . $prefix_key;
         };
 
         $result = $this->commit(
@@ -182,7 +185,8 @@ class DynamoDBDriver implements DriverInterface
                 'TableName' => $this->getTableName($classMetadata),
                 'Key' => $identifierFields,
                 'UpdateExpression' => 'SET ' . implode(', ', $updateExpression),
-                'ExpressionAttributeValues' => $expressionAttribute
+                'ExpressionAttributeValues' => $expressionAttribute,
+                'ExpressionAttributeNames' => $expressionAttributeName
             ]
         );
 
