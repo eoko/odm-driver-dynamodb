@@ -7,6 +7,7 @@ use Aws\DynamoDb\Marshaler;
 use Doctrine\Common\Collections\Criteria;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
+use Eoko\ODM\Strategy\DynamoDBStrategy;
 use Exception;
 use Zend\Log\Logger;
 use Zend\Log\LoggerInterface;
@@ -49,8 +50,8 @@ class DynamoDBDriver implements DriverInterface
     /** @var string  */
     protected $prefix = 'default_';
 
-    /** @var Marshaler */
-    protected $marshaler;
+    /** @var DynamoDBStrategy */
+    protected $strategy;
 
     /**
      * @param $options
@@ -59,7 +60,7 @@ class DynamoDBDriver implements DriverInterface
     {
         $this->options = $options;
         $this->client = $client;
-        $this->marshaler = new Marshaler();
+        $this->strategy = new DynamoDBStrategy();
 
         if (isset($options['prefix']) && is_string($options['prefix'])) {
             $this->prefix = $options['prefix'];
@@ -82,7 +83,7 @@ class DynamoDBDriver implements DriverInterface
             throw new MissingIdentifierException('The following field [' . implode(', ', $classMetadata->getIdentifierFieldNames()) . '] are mandatories.');
         }
 
-        $item = $this->marshaler->marshalItem($values);
+        $item = $this->strategy->hydrate($values);
         $args = ['TableName' => $this->getTableName($classMetadata), 'Item' => $item];
 
         if (!$this->commit('putItem', $args)) {
@@ -108,7 +109,7 @@ class DynamoDBDriver implements DriverInterface
             return;
         }
 
-        return $this->marshaler->unmarshalItem($item);
+        return $this->strategy->extract($item);
     }
 
     /**
@@ -122,17 +123,16 @@ class DynamoDBDriver implements DriverInterface
         $items = $result->get('Items');
 
         return array_map(function ($item) {
-            return $this->marshaler->unmarshalItem($item);
+            return $this->strategy->extract($item);
         }, $items);
     }
 
     /**
      * @todo handle more criteria, only where can be used
      * @param Criteria $criteria
-     * @param int $limit
      * @param ClassMetadata $classMetadata
      * @return array
-     * @throws Exception
+     * @internal param int $limit
      */
     public function findBy(Criteria $criteria, ClassMetadata $classMetadata)
     {
@@ -153,7 +153,7 @@ class DynamoDBDriver implements DriverInterface
         $result = $this->commit('scan', $request);
 
         return array_map(function ($item) {
-            return $this->marshaler->unmarshalItem($item);
+            return $this->strategy->extract($item);
         }, $result->get('Items'));
     }
 
@@ -165,7 +165,7 @@ class DynamoDBDriver implements DriverInterface
      */
     public function updateItem(array $identifiers, array $values, ClassMetadata $classMetadata)
     {
-        $item = $this->marshaler->marshalItem($values);
+        $item = $this->strategy->hydrate($values);
         $identifierFields = $this->getKeyValues($identifiers, $classMetadata);
 
         $expressionAttribute = [];
