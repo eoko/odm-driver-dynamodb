@@ -7,7 +7,7 @@ use Aws\DynamoDb\Marshaler;
 use Doctrine\Common\Collections\Criteria;
 use Eoko\ODM\DocumentManager\Driver\DriverInterface;
 use Eoko\ODM\DocumentManager\Metadata\ClassMetadata;
-use Eoko\ODM\Strategy\DynamoDBStrategy;
+use Eoko\ODM\Driver\DynamoDB\Strategy\DynamoDBStrategy;
 use Exception;
 use Zend\Log\Logger;
 use Zend\Log\LoggerInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Eoko\ODM\Strategy;
+namespace Eoko\ODM\Driver\DynamoDB\Strategy;
 
 use Aws\DynamoDb\Marshaler;
 use Zend\Stdlib\Hydrator\Strategy\StrategyInterface;
