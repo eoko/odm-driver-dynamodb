@@ -3,6 +3,7 @@
 namespace Eoko\ODM\Driver\DynamoDB\Strategy;
 
 use Aws\DynamoDb\Marshaler;
+use Zend\Filter\ToNull;
 use Zend\Stdlib\Hydrator\Strategy\StrategyInterface;
 
 class DynamoDBStrategy implements StrategyInterface
@@ -37,6 +38,9 @@ class DynamoDBStrategy implements StrategyInterface
      */
     public function hydrate($value)
     {
+        $value = array_filter($value, function ($var) {
+            return !is_null($var);
+        });
         return $this->marshaller->marshalItem($value);
     }
 

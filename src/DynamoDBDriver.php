@@ -141,7 +141,11 @@ class DynamoDBDriver implements DriverInterface
 
         $tokens = array_map(function ($item) use ($classMetadata) {
             $type = $this->mapTypeField($classMetadata->getTypeOfField($item['field']));
-            return [$type => $item['value']];
+            $value = $item['value'];
+            if($type === 'N') {
+                $value = (string) $value;
+            }
+            return [$type => $value];
         }, $tokens);
 
         $request = [
